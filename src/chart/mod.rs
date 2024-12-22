@@ -75,16 +75,11 @@ pub async fn get_chart_data(
         Err(_) => return Err(Error::InvalidTimeframe),
     };
 
-    let pubkey = match Pubkey::from_str(address) {
-        Ok(pubkey) => pubkey,
-        Err(_) => return Err(Error::InvalidAddress),
-    };
-
     let reqwest = Client::new();
     let coingecko = CoingeckoClient::from_client(&reqwest);
     let client = SolanaMirrorClient::from_client(&reqwest, get_rpc());
 
-    let txs = get_parsed_transactions(&client, &pubkey, None).await?;
+    let txs = get_parsed_transactions(address, None).await?;
     let states = get_balance_states(&txs.transactions);
     let filtered_states = filter_balance_states(&states, parsed_timeframe, range);
     let chart_data = get_price_states(&client, &coingecko, &filtered_states).await?;
