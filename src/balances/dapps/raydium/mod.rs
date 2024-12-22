@@ -1,3 +1,5 @@
+use futures::future::join_all;
+use rocket::http::Status;
 use serde::de::DeserializeOwned;
 use solana_sdk::pubkey::Pubkey;
 use std::str::FromStr;
@@ -6,6 +8,7 @@ use crate::{
     balances::dapps::types::{ProtocolInfo, TokenPosition},
     client::{GetAccountDataConfig, SolanaMirrorClient},
     enums::Error,
+    get_parsed_accounts, get_rpc,
     price::get_price,
     types::{FormattedAmount, FormattedAmountWithPrice},
     utils::{calculate_concentrated_liquidity_amounts, fetch_image, fetch_metadata},
@@ -18,7 +21,60 @@ pub mod types;
 
 const RAYDIUM_CL_PROGRAM_ID: &str = "CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK";
 
-pub async fn get_raydium_position(
+pub async fn get_raydium_positions(address: &str) -> Result<Vec<ParsedPosition>, Status> {
+    let pubkey = match Pubkey::from_str(address) {
+        Ok(pubkey) => pubkey,
+        Err(_) => return Err(Status::BadRequest),
+    };
+
+    let client = SolanaMirrorClient::new(get_rpc());
+    let parsed_accounts_results = get_parsed_accounts(&client, &pubkey).await;
+
+    let parsed_accounts = match parsed_accounts_results {
+        Ok(accounts) => accounts,
+        Err(err) => {
+            let status_code = match err {
+                Error::InvalidAddress => Status::BadRequest,
+                Error::TooManyRequests => Status::TooManyRequests,
+                _ => Status::InternalServerError,
+            };
+            return Err(status_code);
+        }
+    };
+
+    let position_mints: Vec<&str> = parsed_accounts
+        .iter()
+        .filter(|account| account.balance.amount == "1")
+        .map(|account| account.mint.as_str())
+        .collect();
+
+    let parse_raydium_position_futures: Vec<_> = position_mints
+        .iter()
+        .map(|&mint| get_raydium_position_by_mint(&client, mint))
+        .collect();
+
+    let parsed_raydium_results: Vec<Result<ParsedPosition, Error>> =
+        join_all(parse_raydium_position_futures).await;
+
+    let mut parsed_raydium_positions: Vec<ParsedPosition> = Vec::new();
+
+    for result in parsed_raydium_results {
+        match result {
+            Ok(parsed_position) => parsed_raydium_positions.push(parsed_position),
+            Err(err) => {
+                let status_code = match err {
+                    Error::InvalidAddress => Status::BadRequest,
+                    Error::TooManyRequests => Status::TooManyRequests,
+                    _ => Status::InternalServerError,
+                };
+                return Err(status_code);
+            }
+        }
+    }
+    Ok(parsed_raydium_positions)
+}
+
+async fn get_raydium_position_by_mint(
     client: &SolanaMirrorClient,
     mint_protocol: &str,
 ) -> Result<ParsedPosition, Error> {

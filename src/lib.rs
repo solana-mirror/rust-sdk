@@ -23,6 +23,6 @@ pub use client::SolanaMirrorClient;
 pub use utils::get_rpc;
 
 pub use balances::accounts::get_parsed_accounts;
-pub use balances::dapps::raydium::get_raydium_position;
+pub use balances::dapps::raydium::get_raydium_positions;
 pub use chart::get_chart_data;
 pub use transactions::get_parsed_transactions;
