@@ -1,3 +1,13 @@
+//! # Solana Mirror
+//! 
+//! A Rust library for retrieving current and historical data for a given Solana wallet
+//! 
+//! ## Features
+//! 
+//! - Current token and positions balance
+//! - Transaction history
+//! - Chart data
+
 pub mod balances;
 pub mod chart;
 pub mod client;
