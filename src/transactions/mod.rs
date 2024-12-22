@@ -1,6 +1,6 @@
 use solana_program::native_token::LAMPORTS_PER_SOL;
 use solana_sdk::pubkey::Pubkey;
-use std::collections::HashMap;
+use std::{collections::HashMap, str::FromStr};
 
 pub mod types;
 
@@ -9,21 +9,35 @@ use crate::{
         types::{TokenBalance, Transaction},
         GetSignaturesForAddressConfig, GetTransactionConfig, SolanaMirrorClient,
     },
+    consts::SOL_ADDRESS,
+    enums::Error,
+    get_rpc,
     transactions::types::{BalanceChange, ParsedTransaction},
     types::FormattedAmount,
-    utils::create_batches,
-    Error, Page, SOL_ADDRESS,
+    utils::{create_batches, parse_page},
 };
 
 use self::types::TransactionResponse;
 
 /// Get the parsed transactions for the given address
 pub async fn get_parsed_transactions(
-    client: &SolanaMirrorClient,
-    pubkey: &Pubkey,
-    page: Option<Page>,
+    address: &str,
+    index: Option<&str>,
 ) -> Result<TransactionResponse, Error> {
-    let signatures = get_signatures(client, pubkey).await?;
+    let client = SolanaMirrorClient::new(get_rpc());
+
+    let pubkey = match Pubkey::from_str(address) {
+        Ok(pubkey) => pubkey,
+        Err(_) => return Err(Error::InvalidAddress),
+    };
+
+    let page = match parse_page(index) {
+        Ok(p) => p,
+        Err(_) => return Err(Error::ParseError),
+    };
+
+    let signatures = get_signatures(&client, &pubkey).await?;
+    
     let batches = match page {
         Some(p) => {
             if p.start_idx >= signatures.len() {
@@ -59,7 +73,7 @@ pub async fn get_parsed_transactions(
 
     let mut parsed_transactions: Vec<ParsedTransaction> = txs
         .iter()
-        .map(|tx| parse_transaction(tx, pubkey))
+        .map(|tx| parse_transaction(tx, &pubkey))
         .filter_map(|x| x.ok())
         .collect::<Vec<ParsedTransaction>>();
 

@@ -11,10 +11,11 @@ use crate::{
         SolanaMirrorClient,
     },
     coingecko::get_coingecko_id,
+    consts::{SOL_ADDRESS, SOL_IMAGE},
+    enums::Error,
     price::get_price,
     types::FormattedAmount,
     utils::{fetch_image, fetch_metadata},
-    Error, SOL_ADDRESS, SOL_IMAGE,
 };
 
 use types::ParsedAta;

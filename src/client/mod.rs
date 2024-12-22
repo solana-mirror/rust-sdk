@@ -1,7 +1,7 @@
 use std::future::Future;
 use std::pin::Pin;
 
-use crate::Error;
+use crate::enums::Error;
 use base64::Engine;
 use reqwest::Client;
 use serde::{self, de::DeserializeOwned, Deserialize, Serialize};

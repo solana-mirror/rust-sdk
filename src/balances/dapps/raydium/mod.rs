@@ -1,3 +1,4 @@
+use futures::future::join_all;
 use serde::de::DeserializeOwned;
 use solana_sdk::pubkey::Pubkey;
 use std::str::FromStr;
@@ -5,10 +6,11 @@ use std::str::FromStr;
 use crate::{
     balances::dapps::types::{ProtocolInfo, TokenPosition},
     client::{GetAccountDataConfig, SolanaMirrorClient},
+    enums::Error,
+    get_parsed_accounts, get_rpc,
     price::get_price,
     types::{FormattedAmount, FormattedAmountWithPrice},
     utils::{calculate_concentrated_liquidity_amounts, fetch_image, fetch_metadata},
-    Error,
 };
 
 use super::types::ParsedPosition;
@@ -18,7 +20,38 @@ pub mod types;
 
 const RAYDIUM_CL_PROGRAM_ID: &str = "CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK";
 
-pub async fn get_raydium_position(
+pub async fn get_raydium_positions(address: &str) -> Result<Vec<ParsedPosition>, Error> {
+    let pubkey = Pubkey::from_str(address).map_err(|_| Error::InvalidAddress)?;
+
+    let client = SolanaMirrorClient::new(get_rpc());
+    let parsed_accounts = get_parsed_accounts(&client, &pubkey).await?;
+
+    let position_mints: Vec<&str> = parsed_accounts
+        .iter()
+        .filter(|account| account.balance.amount == "1")
+        .map(|account| account.mint.as_str())
+        .collect();
+
+    let parse_raydium_position_futures: Vec<_> = position_mints
+        .iter()
+        .map(|&mint| get_raydium_position_by_mint(&client, mint))
+        .collect();
+
+    let parsed_raydium_results: Vec<Result<ParsedPosition, Error>> =
+        join_all(parse_raydium_position_futures).await;
+
+    let mut parsed_raydium_positions: Vec<ParsedPosition> = Vec::new();
+
+    for result in parsed_raydium_results {
+        match result {
+            Ok(parsed_position) => parsed_raydium_positions.push(parsed_position),
+            Err(err) => return Err(err),
+        }
+    }
+    Ok(parsed_raydium_positions)
+}
+
+async fn get_raydium_position_by_mint(
     client: &SolanaMirrorClient,
     mint_protocol: &str,
 ) -> Result<ParsedPosition, Error> {
@@ -103,7 +136,7 @@ pub async fn get_raydium_position(
     Ok(parsed_position)
 }
 
-pub fn get_position_address(nft_mint: &str) -> Result<Pubkey, Error> {
+fn get_position_address(nft_mint: &str) -> Result<Pubkey, Error> {
     let nft_mint_pubkey = Pubkey::from_str(nft_mint).unwrap();
     let program_id = Pubkey::from_str(RAYDIUM_CL_PROGRAM_ID).unwrap();
     let seeds = &[b"position", nft_mint_pubkey.as_ref()];

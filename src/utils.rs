@@ -6,7 +6,9 @@ use solana_sdk::pubkey::Pubkey;
 use crate::{
     balances::accounts::types::{ImageResponse, ParsedMetadata},
     client::{GetAccountDataConfig, SolanaMirrorClient},
-    Error, Page, SOL_IMAGE, USDC_IMAGE,
+    consts::{SOL_IMAGE, USDC_IMAGE},
+    enums::Error,
+    types::Page,
 };
 
 pub fn clean_string(s: String) -> String {
@@ -47,6 +49,8 @@ pub fn create_batches<T: Clone>(
     batches
 }
 
+#[allow(dead_code)]
+// TODO: use this
 pub fn parse_page(index: Option<&str>) -> Result<Option<Page>, Error> {
     if index.is_none() {
         return Ok(None);
@@ -138,18 +142,12 @@ pub async fn fetch_image(metadata: &ParsedMetadata) -> String {
 
     // TODO: have a more generic image fallback
     let predefined_images = HashMap::from([
-        (
-            "USDC",
-            USDC_IMAGE,
-        ),
+        ("USDC", USDC_IMAGE),
         (
             "RCL",
             "https://ipfs.io/ipfs/Qme9ErqmQaznzpfDACncEW48NyXJPFP7HgzfoNdto9xQ9P/02.jpg",
         ),
-        (
-            "SOL",
-            SOL_IMAGE,
-        ),
+        ("SOL", SOL_IMAGE),
     ]);
 
     if let Some(&url) = predefined_images.get(metadata.symbol.as_str()) {
