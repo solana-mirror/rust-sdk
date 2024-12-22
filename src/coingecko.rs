@@ -57,6 +57,8 @@ pub struct CoingeckoClient {
 }
 
 impl CoingeckoClient {
+    #[allow(dead_code)]
+    // TODO: avoid dead code
     pub fn new() -> Self {
         let api_key = match env::var("COINGECKO_API_KEY") {
             Ok(key) => Some(key),

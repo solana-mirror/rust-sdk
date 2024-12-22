@@ -19,6 +19,8 @@ mod transactions;
 mod types;
 mod utils;
 
+// TODO: Create a SolanaMirrorSDK class to handle Coingecko and RPC clients dynamically, instead of declaring them inside each function
+
 pub use client::SolanaMirrorClient;
 pub use utils::get_rpc;
 
