@@ -1,5 +1,4 @@
 use futures::future::join_all;
-use rocket::http::Status;
 use serde::de::DeserializeOwned;
 use solana_sdk::pubkey::Pubkey;
 use std::str::FromStr;
@@ -21,26 +20,11 @@ pub mod types;
 
 const RAYDIUM_CL_PROGRAM_ID: &str = "CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK";
 
-pub async fn get_raydium_positions(address: &str) -> Result<Vec<ParsedPosition>, Status> {
-    let pubkey = match Pubkey::from_str(address) {
-        Ok(pubkey) => pubkey,
-        Err(_) => return Err(Status::BadRequest),
-    };
+pub async fn get_raydium_positions(address: &str) -> Result<Vec<ParsedPosition>, Error> {
+    let pubkey = Pubkey::from_str(address).map_err(|_| Error::InvalidAddress)?;
 
     let client = SolanaMirrorClient::new(get_rpc());
-    let parsed_accounts_results = get_parsed_accounts(&client, &pubkey).await;
-
-    let parsed_accounts = match parsed_accounts_results {
-        Ok(accounts) => accounts,
-        Err(err) => {
-            let status_code = match err {
-                Error::InvalidAddress => Status::BadRequest,
-                Error::TooManyRequests => Status::TooManyRequests,
-                _ => Status::InternalServerError,
-            };
-            return Err(status_code);
-        }
-    };
+    let parsed_accounts = get_parsed_accounts(&client, &pubkey).await?;
 
     let position_mints: Vec<&str> = parsed_accounts
         .iter()
@@ -61,14 +45,7 @@ pub async fn get_raydium_positions(address: &str) -> Result<Vec<ParsedPosition>,
     for result in parsed_raydium_results {
         match result {
             Ok(parsed_position) => parsed_raydium_positions.push(parsed_position),
-            Err(err) => {
-                let status_code = match err {
-                    Error::InvalidAddress => Status::BadRequest,
-                    Error::TooManyRequests => Status::TooManyRequests,
-                    _ => Status::InternalServerError,
-                };
-                return Err(status_code);
-            }
+            Err(err) => return Err(err),
         }
     }
     Ok(parsed_raydium_positions)
