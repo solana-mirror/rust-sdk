@@ -1,5 +1,6 @@
 use crate::client::GetDecimalsConfig;
-use crate::{client::SolanaMirrorClient, USDC_ADDRESS};
+use crate::client::SolanaMirrorClient;
+use crate::consts::USDC_ADDRESS;
 use jupiter_swap_api_client::{quote::QuoteRequest, JupiterSwapApiClient};
 use solana_program::pubkey::Pubkey as ProgramPubkey;
 use solana_sdk::pubkey::Pubkey;

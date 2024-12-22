@@ -5,10 +5,10 @@ use std::str::FromStr;
 use crate::{
     balances::dapps::types::{ProtocolInfo, TokenPosition},
     client::{GetAccountDataConfig, SolanaMirrorClient},
+    enums::Error,
     price::get_price,
     types::{FormattedAmount, FormattedAmountWithPrice},
     utils::{calculate_concentrated_liquidity_amounts, fetch_image, fetch_metadata},
-    Error,
 };
 
 use super::types::ParsedPosition;
@@ -103,7 +103,7 @@ pub async fn get_raydium_position(
     Ok(parsed_position)
 }
 
-pub fn get_position_address(nft_mint: &str) -> Result<Pubkey, Error> {
+fn get_position_address(nft_mint: &str) -> Result<Pubkey, Error> {
     let nft_mint_pubkey = Pubkey::from_str(nft_mint).unwrap();
     let program_id = Pubkey::from_str(RAYDIUM_CL_PROGRAM_ID).unwrap();
     let seeds = &[b"position", nft_mint_pubkey.as_ref()];

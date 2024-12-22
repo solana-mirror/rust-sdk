@@ -11,3 +11,9 @@ pub struct FormattedAmountWithPrice {
     pub amount: FormattedAmount,
     pub price: f64,
 }
+
+#[derive(Debug)]
+pub struct Page {
+    pub start_idx: usize,
+    pub end_idx: usize,
+}

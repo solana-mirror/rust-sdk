@@ -9,10 +9,11 @@ use types::{ChartData, ChartDataWithPrice, GetCoinMarketChartParams};
 use crate::{
     client::SolanaMirrorClient,
     coingecko::{get_coingecko_id, CoingeckoClient},
+    consts::SOL_ADDRESS,
+    enums::Error,
     price::get_price,
     transactions::{get_parsed_transactions, types::ParsedTransaction},
     types::FormattedAmountWithPrice,
-    Error, SOL_ADDRESS,
 };
 
 #[derive(Debug)]
@@ -158,7 +159,7 @@ fn filter_balance_states(
     filtered_states
 }
 
-pub async fn get_price_states(
+async fn get_price_states(
     client: &SolanaMirrorClient,
     coingecko_client: &CoingeckoClient,
     states: &Vec<ChartData>,

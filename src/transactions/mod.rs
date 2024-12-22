@@ -9,10 +9,11 @@ use crate::{
         types::{TokenBalance, Transaction},
         GetSignaturesForAddressConfig, GetTransactionConfig, SolanaMirrorClient,
     },
+    consts::SOL_ADDRESS,
+    enums::Error,
     transactions::types::{BalanceChange, ParsedTransaction},
-    types::FormattedAmount,
+    types::{FormattedAmount, Page},
     utils::create_batches,
-    Error, Page, SOL_ADDRESS,
 };
 
 use self::types::TransactionResponse;
