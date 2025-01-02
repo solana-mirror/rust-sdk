@@ -5,7 +5,7 @@ use solana_sdk::pubkey::Pubkey;
 
 use crate::{
     balances::accounts::types::{ImageResponse, ParsedMetadata},
-    client::{GetAccountDataConfig, SolanaMirrorClient},
+    client::{GetAccountDataConfig, SolanaMirrorRpcClient},
     consts::{SOL_IMAGE, USDC_IMAGE},
     enums::Error,
     types::Page,
@@ -49,39 +49,27 @@ pub fn create_batches<T: Clone>(
     batches
 }
 
-#[allow(dead_code)]
-// TODO: use this
-pub fn parse_page(index: Option<&str>) -> Result<Option<Page>, Error> {
+pub fn parse_page(index: Option<(u64, u64)>) -> Result<Option<Page>, Error> {
     if index.is_none() {
         return Ok(None);
     }
 
-    let split: Vec<&str> = index.unwrap().split('-').collect();
-
-    if split.len() != 2 {
-        return Err(Error::InvalidIndex);
-    }
-
-    let start_idx = match split[0].parse::<usize>() {
-        Ok(x) => x,
-        _ => return Err(Error::InvalidIndex),
-    };
-    let end_idx = match split[1].parse::<usize>() {
-        Ok(y) => y,
-        _ => return Err(Error::InvalidIndex),
-    };
+    let (start_idx, end_idx) = index.unwrap();
 
     if end_idx < start_idx {
         return Err(Error::InvalidIndex);
     }
 
-    Ok(Some(Page { start_idx, end_idx }))
+    Ok(Some(Page {
+        start_idx: start_idx as usize,
+        end_idx: end_idx as usize,
+    }))
 }
 
 static mut METADATA_CACHE: Option<HashMap<String, ParsedMetadata>> = None;
 
 /// Fetches or retrieves from cache the metadata associated with the given SPL token mint address.
-pub async fn fetch_metadata(client: &SolanaMirrorClient, mint_address: &str) -> ParsedMetadata {
+pub async fn fetch_metadata(client: &SolanaMirrorRpcClient, mint_address: &str) -> ParsedMetadata {
     let cache = unsafe { METADATA_CACHE.get_or_insert(HashMap::new()) };
     if let Some(metadata) = cache.get(mint_address) {
         return metadata.clone();

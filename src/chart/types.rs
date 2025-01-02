@@ -25,8 +25,6 @@ pub struct MinimalChartData {
     pub usd_value: f64,
 }
 
-#[allow(dead_code)]
-// TODO: use this
 #[derive(serde::Serialize)]
 #[serde(untagged)]
 pub enum ChartResponse {

@@ -4,27 +4,29 @@ use solana_sdk::pubkey::Pubkey;
 use std::str::FromStr;
 
 use crate::{
-    balances::dapps::types::{ProtocolInfo, TokenPosition},
-    client::{GetAccountDataConfig, SolanaMirrorClient},
+    balances::{
+        accounts::get_parsed_accounts,
+        dapps::types::{ProtocolInfo, TokenPosition},
+    },
+    client::{GetAccountDataConfig, SolanaMirrorRpcClient},
     enums::Error,
-    get_parsed_accounts, get_rpc,
     price::get_price,
     types::{FormattedAmount, FormattedAmountWithPrice},
     utils::{calculate_concentrated_liquidity_amounts, fetch_image, fetch_metadata},
 };
 
-use super::types::ParsedPosition;
+pub use super::types::ParsedPosition;
 use types::{Pool, Position};
 
 pub mod types;
 
 const RAYDIUM_CL_PROGRAM_ID: &str = "CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK";
 
-pub async fn get_raydium_positions(address: &str) -> Result<Vec<ParsedPosition>, Error> {
-    let pubkey = Pubkey::from_str(address).map_err(|_| Error::InvalidAddress)?;
-
-    let client = SolanaMirrorClient::new(get_rpc());
-    let parsed_accounts = get_parsed_accounts(&client, &pubkey).await?;
+pub async fn get_raydium_positions(
+    client: &SolanaMirrorRpcClient,
+    address: &Pubkey,
+) -> Result<Vec<ParsedPosition>, Error> {
+    let parsed_accounts = get_parsed_accounts(&client, &address).await?;
 
     let position_mints: Vec<&str> = parsed_accounts
         .iter()
@@ -52,7 +54,7 @@ pub async fn get_raydium_positions(address: &str) -> Result<Vec<ParsedPosition>,
 }
 
 async fn get_raydium_position_by_mint(
-    client: &SolanaMirrorClient,
+    client: &SolanaMirrorRpcClient,
     mint_protocol: &str,
 ) -> Result<ParsedPosition, Error> {
     let position_address = get_position_address(mint_protocol).unwrap();
@@ -145,7 +147,7 @@ fn get_position_address(nft_mint: &str) -> Result<Pubkey, Error> {
 }
 
 async fn get_position_data(
-    client: &SolanaMirrorClient,
+    client: &SolanaMirrorRpcClient,
     position_address: &Pubkey,
 ) -> Result<Position, Error> {
     let encoded_position = match client
@@ -164,7 +166,7 @@ async fn get_position_data(
     decode_data(&encoded_position)
 }
 
-async fn get_pool_data(client: &SolanaMirrorClient, pool_id: &Pubkey) -> Result<Pool, Error> {
+async fn get_pool_data(client: &SolanaMirrorRpcClient, pool_id: &Pubkey) -> Result<Pool, Error> {
     let encoded_pool = client
         .get_account_info(
             pool_id,

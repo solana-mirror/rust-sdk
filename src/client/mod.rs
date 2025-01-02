@@ -196,12 +196,12 @@ fn deserialize<T: DeserializeOwned>(res: &Value) -> Result<T, Error> {
     }
 }
 
-pub struct SolanaMirrorClient {
+pub struct SolanaMirrorRpcClient {
     inner_client: Client,
     pub rpc_url: String,
 }
 
-impl SolanaMirrorClient {
+impl SolanaMirrorRpcClient {
     pub fn new(rpc_url: String) -> Self {
         Self {
             inner_client: Client::new(),

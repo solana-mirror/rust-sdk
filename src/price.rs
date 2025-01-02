@@ -1,5 +1,5 @@
 use crate::client::GetDecimalsConfig;
-use crate::client::SolanaMirrorClient;
+use crate::client::SolanaMirrorRpcClient;
 use crate::consts::USDC_ADDRESS;
 use jupiter_swap_api_client::{quote::QuoteRequest, JupiterSwapApiClient};
 use solana_program::pubkey::Pubkey as ProgramPubkey;
@@ -9,7 +9,7 @@ use std::str::FromStr;
 /// Gets the price of the mint against USDC
 /// Lets the caller pass the decimals beforehand. If they're not passed, they will be fetched
 pub async fn get_price(
-    client: &SolanaMirrorClient,
+    client: &SolanaMirrorRpcClient,
     token: Pubkey,
     decimals: Option<u8>,
 ) -> Option<f64> {
