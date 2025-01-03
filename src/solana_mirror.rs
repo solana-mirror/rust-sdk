@@ -2,6 +2,7 @@ use crate::balances::accounts::{get_parsed_accounts, ParsedAta};
 use crate::balances::dapps::raydium::{get_raydium_positions, ParsedPosition};
 use crate::chart::{get_chart_data, ChartResponse, Timeframe};
 use crate::client::SolanaMirrorRpcClient;
+use crate::coingecko::CoingeckoClient;
 use crate::enums::Error;
 use crate::transactions::{get_parsed_transactions, TransactionResponse};
 use crate::types::FetchOpts;
@@ -13,6 +14,8 @@ pub struct SolanaMirror {
     watch: Pubkey,
     /// Client instance for making RPC calls
     client: SolanaMirrorRpcClient,
+    /// Coingecko instance for getting historical token prices
+    coingecko_client: CoingeckoClient,
 }
 
 impl SolanaMirror {
@@ -23,7 +26,8 @@ impl SolanaMirror {
     pub fn new(watch: Pubkey, rpc_url: String) -> Self {
         Self {
             watch,
-            client: SolanaMirrorRpcClient::new(rpc_url),
+            client: SolanaMirrorRpcClient::new(rpc_url.clone()),
+            coingecko_client: CoingeckoClient::new(),
         }
     }
 
@@ -88,6 +92,15 @@ impl SolanaMirror {
         detailed: Option<bool>,
         opts: Option<FetchOpts>,
     ) -> Result<ChartResponse, Error> {
-        get_chart_data(&self.watch, range, timeframe, detailed, opts).await
+        get_chart_data(
+            &self.client,
+            &self.coingecko_client,
+            &self.watch,
+            range,
+            timeframe,
+            detailed,
+            opts,
+        )
+        .await
     }
 }

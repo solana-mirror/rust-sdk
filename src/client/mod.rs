@@ -209,13 +209,6 @@ impl SolanaMirrorRpcClient {
         }
     }
 
-    pub fn from_client(inner_client: &Client, rpc_url: String) -> Self {
-        Self {
-            inner_client: inner_client.clone(),
-            rpc_url,
-        }
-    }
-
     async fn make_batch_request<T: Serialize>(
         &self,
         body: &Vec<JsonRpcRequest<T>>,

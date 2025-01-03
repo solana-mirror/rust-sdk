@@ -17,7 +17,6 @@ use crate::{
     price::get_price,
     transactions::{get_parsed_transactions, types::ParsedTransaction},
     types::{FetchOpts, FormattedAmountWithPrice},
-    utils::get_rpc,
 };
 
 #[derive(Debug)]
@@ -46,6 +45,8 @@ impl Timeframe {
 }
 
 pub async fn get_chart_data(
+    client: &SolanaMirrorRpcClient,
+    coingecko_client: &CoingeckoClient,
     address: &Pubkey,
     range: u8,
     timeframe: Timeframe,
@@ -53,14 +54,10 @@ pub async fn get_chart_data(
     // TODO: handle string parsing into a Rust equivalent of `BN` from TS
     _opts: Option<FetchOpts>,
 ) -> Result<ChartResponse, Error> {
-    let reqwest = Client::new();
-    let coingecko = CoingeckoClient::from_client(&reqwest);
-    let client = SolanaMirrorRpcClient::from_client(&reqwest, get_rpc());
-
     let txs = get_parsed_transactions(&client, address, None).await?;
     let states = get_balance_states(&txs.transactions);
     let filtered_states = filter_balance_states(&states, timeframe, range);
-    let chart_data = get_price_states(&client, &coingecko, &filtered_states).await?;
+    let chart_data = get_price_states(&client, &coingecko_client, &filtered_states).await?;
 
     if detailed.unwrap_or(false) {
         Ok(ChartResponse::Detailed(chart_data))
