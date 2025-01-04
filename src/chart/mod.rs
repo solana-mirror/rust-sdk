@@ -1,4 +1,3 @@
-use reqwest::Client;
 use solana_sdk::pubkey::Pubkey;
 use std::{
     collections::{HashMap, HashSet},

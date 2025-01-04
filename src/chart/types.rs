@@ -25,7 +25,7 @@ pub struct MinimalChartData {
     pub usd_value: f64,
 }
 
-#[derive(serde::Serialize)]
+#[derive(Serialize, Debug)]
 #[serde(untagged)]
 pub enum ChartResponse {
     Detailed(Vec<ChartDataWithPrice>),
