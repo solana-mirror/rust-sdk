@@ -8,6 +8,8 @@ use crate::{chart::types::GetCoinMarketChartParams, enums::Error};
 
 const BASE_URL: &str = "https://api.coingecko.com/api/v3";
 
+#[allow(dead_code)]
+// TODO: avoid dead code
 #[derive(Deserialize, Debug)]
 pub struct CoingeckoToken {
     #[serde(skip)]
@@ -57,6 +59,8 @@ pub struct CoingeckoClient {
 }
 
 impl CoingeckoClient {
+    #[allow(dead_code)]
+    // TODO: avoid dead code
     pub fn new() -> Self {
         let api_key = match env::var("COINGECKO_API_KEY") {
             Ok(key) => Some(key),

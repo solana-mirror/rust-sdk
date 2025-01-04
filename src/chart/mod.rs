@@ -16,6 +16,7 @@ use crate::{
     price::get_price,
     transactions::{get_parsed_transactions, types::ParsedTransaction},
     types::{FetchOpts, FormattedAmountWithPrice},
+
 };
 
 #[derive(Debug)]
