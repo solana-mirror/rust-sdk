@@ -10,8 +10,10 @@ const BASE_URL: &str = "https://api.coingecko.com/api/v3";
 
 #[derive(Deserialize, Debug)]
 pub struct CoingeckoToken {
+    #[serde(skip)]
     pub _name: String,
     pub id: String,
+    #[serde(skip)]
     pub _symbol: String,
 }
 

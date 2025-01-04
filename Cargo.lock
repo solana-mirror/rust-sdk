@@ -3635,6 +3635,7 @@ dependencies = [
  "futures",
  "jupiter-swap-api-client",
  "mpl-token-metadata",
+ "once_cell",
  "reqwest",
  "rocket",
  "serde",
