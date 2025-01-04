@@ -21,7 +21,7 @@ pub type CoingeckoData = HashMap<String, CoingeckoToken>;
 
 /// Reads the coingecko.json file with all the coingecko IDs available
 pub async fn get_coingecko_data() -> Result<CoingeckoData, Error> {
-    let file = match File::open("lib/src/coingecko.json") {
+    let file = match File::open("src/coingecko.json") {
         Ok(file) => file,
         Err(e) => {
             eprintln!("Failed to open file: {}", e);
