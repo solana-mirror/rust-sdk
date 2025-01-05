@@ -178,7 +178,7 @@ where
         }
     }
 
-    Err(Error::FetchError)
+    Err(Error::FetchError("Fetch error occurred".to_string()))
 }
 
 fn deserialize<T: DeserializeOwned>(res: &Value) -> Result<T, Error> {
@@ -186,13 +186,13 @@ fn deserialize<T: DeserializeOwned>(res: &Value) -> Result<T, Error> {
     if let Ok(deserialized_err) = from_value::<JsonRpcError>(res.clone()) {
         match deserialized_err.error.code {
             429 => return Err(Error::TooManyRequests),
-            _ => return Err(Error::FetchError),
+            _ => return Err(Error::FetchError("Fetch error occurred".to_string())),
         }
     }
 
     match from_value::<T>(res.clone()) {
         Ok(res) => Ok(res),
-        Err(_) => Err(Error::ParseError),
+        Err(e) => Err(Error::ParseError(e.to_string())),
     }
 }
 
@@ -215,7 +215,7 @@ impl SolanaMirrorRpcClient {
     ) -> Result<Value, Error> {
         let serialized = match serde_json::to_string(body) {
             Ok(serialized) => serialized,
-            Err(_) => return Err(Error::ParseError),
+            Err(e) => return Err(Error::ParseError(e.to_string())),
         };
 
         let req = self
@@ -230,10 +230,10 @@ impl SolanaMirrorRpcClient {
                 let res = response
                     .json::<Value>()
                     .await
-                    .map_err(|_| Error::ParseError)?;
+                    .map_err(|e| Error::ParseError(e.to_string()))?;
                 Ok(res)
             }
-            Err(_) => Err(Error::FetchError),
+            Err(e) => Err(Error::FetchError(e.to_string())),
         }
     }
 
@@ -251,7 +251,7 @@ impl SolanaMirrorRpcClient {
 
         let serialized = match serde_json::to_string(body) {
             Ok(serialized) => serialized,
-            Err(_) => return Err(Error::ParseError),
+            Err(e) => return Err(Error::ParseError(e.to_string())),
         };
 
         let req = self
@@ -266,10 +266,10 @@ impl SolanaMirrorRpcClient {
                 let res = response
                     .json::<Value>()
                     .await
-                    .map_err(|_| Error::ParseError)?;
+                    .map_err(|e| Error::ParseError(e.to_string()))?;
                 Ok(res)
             }
-            Err(_) => Err(Error::FetchError),
+            Err(e) => Err(Error::FetchError(e.to_string())),
         }
     }
 

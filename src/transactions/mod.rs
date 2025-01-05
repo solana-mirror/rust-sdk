@@ -26,7 +26,7 @@ pub async fn get_parsed_transactions(
 ) -> Result<TransactionResponse, Error> {
     let page = match parse_page(index) {
         Ok(p) => p,
-        Err(_) => return Err(Error::ParseError),
+        Err(e) => return Err(Error::ParseError(e.to_string())),
     };
 
     let signatures = get_signatures(&client, &address).await?;

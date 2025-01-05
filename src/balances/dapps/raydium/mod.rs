@@ -180,5 +180,5 @@ async fn get_pool_data(client: &SolanaMirrorRpcClient, pool_id: &Pubkey) -> Resu
 }
 
 fn decode_data<T: DeserializeOwned>(data: &[u8]) -> Result<T, Error> {
-    bincode::deserialize(data).map_err(|_| Error::ParseError)
+    bincode::deserialize(data).map_err(|e| Error::ParseError(e.to_string()))
 }

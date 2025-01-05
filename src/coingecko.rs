@@ -25,8 +25,7 @@ pub async fn get_coingecko_data() -> Result<CoingeckoData, Error> {
     let file = match File::open("src/coingecko.json") {
         Ok(file) => file,
         Err(e) => {
-            eprintln!("Failed to open file: {}", e);
-            return Err(Error::ParseError);
+            return Err(Error::ParseError(e.to_string()));
         }
     };
 
@@ -34,10 +33,7 @@ pub async fn get_coingecko_data() -> Result<CoingeckoData, Error> {
 
     match from_reader(reader) {
         Ok(data) => Ok(data),
-        Err(e) => {
-            eprintln!("Failed to parse file: {}", e);
-            Err(Error::ParseError)
-        }
+        Err(e) => Err(Error::ParseError(e.to_string())),
     }
 }
 
@@ -78,10 +74,10 @@ impl CoingeckoClient {
                 let res = response
                     .json::<Value>()
                     .await
-                    .map_err(|_| Error::ParseError)?;
+                    .map_err(|e| Error::ParseError(e.to_string()))?;
                 Ok(res)
             }
-            Err(_) => Err(Error::FetchError),
+            Err(e) => Err(Error::FetchError(e.to_string())),
         }
     }
 
