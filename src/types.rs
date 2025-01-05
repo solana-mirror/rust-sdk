@@ -17,8 +17,3 @@ pub struct Page {
     pub start_idx: usize,
     pub end_idx: usize,
 }
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct FetchOpts {
-    pub parse: bool,
-}

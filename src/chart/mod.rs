@@ -15,8 +15,7 @@ use crate::{
     enums::Error,
     price::get_price,
     transactions::{get_parsed_transactions, types::ParsedTransaction},
-    types::{FetchOpts, FormattedAmountWithPrice},
-
+    types::FormattedAmountWithPrice,
 };
 
 #[derive(Debug)]
@@ -51,8 +50,6 @@ pub async fn get_chart_data(
     range: u8,
     timeframe: Timeframe,
     detailed: Option<bool>,
-    // TODO: handle string parsing into a Rust equivalent of `BN` from TS
-    _opts: Option<FetchOpts>,
 ) -> Result<ChartResponse, Error> {
     let txs = get_parsed_transactions(&client, address, None).await?;
     let states = get_balance_states(&txs.transactions);

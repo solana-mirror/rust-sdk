@@ -1,6 +1,6 @@
+use once_cell::sync::Lazy;
 use std::{collections::HashMap, env, str::FromStr};
 use tokio::sync::Mutex;
-use once_cell::sync::Lazy;
 
 use mpl_token_metadata::{accounts::Metadata, programs::MPL_TOKEN_METADATA_ID};
 use solana_sdk::pubkey::Pubkey;
@@ -68,7 +68,8 @@ pub fn parse_page(index: Option<(u64, u64)>) -> Result<Option<Page>, Error> {
     }))
 }
 
-static METADATA_CACHE: Lazy<Mutex<HashMap<String, ParsedMetadata>>> = Lazy::new(|| Mutex::new(HashMap::new()));
+static METADATA_CACHE: Lazy<Mutex<HashMap<String, ParsedMetadata>>> =
+    Lazy::new(|| Mutex::new(HashMap::new()));
 
 /// Fetches or retrieves from cache the metadata associated with the given SPL token mint address.
 pub async fn fetch_metadata(client: &SolanaMirrorRpcClient, mint_address: &str) -> ParsedMetadata {

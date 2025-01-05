@@ -5,7 +5,6 @@ use crate::client::SolanaMirrorRpcClient;
 use crate::coingecko::CoingeckoClient;
 use crate::enums::Error;
 use crate::transactions::{get_parsed_transactions, TransactionResponse};
-use crate::types::FetchOpts;
 use solana_sdk::pubkey::Pubkey;
 
 /// Main struct for interacting with Solana Mirror SDK
@@ -52,7 +51,6 @@ impl SolanaMirror {
     pub async fn get_token_accounts(
         &self,
         show_apps: Option<bool>,
-        _opts: Option<FetchOpts>,
     ) -> Result<(Vec<ParsedAta>, Option<Vec<ParsedPosition>>), Error> {
         let accounts = get_parsed_accounts(&self.client, &self.watch).await?;
 
@@ -73,7 +71,6 @@ impl SolanaMirror {
     pub async fn get_transactions(
         &self,
         index: Option<(u64, u64)>,
-        _opts: Option<FetchOpts>,
     ) -> Result<TransactionResponse, Error> {
         get_parsed_transactions(&self.client, &self.watch, index).await
     }
@@ -90,7 +87,6 @@ impl SolanaMirror {
         range: u8,
         timeframe: Timeframe,
         detailed: Option<bool>,
-        opts: Option<FetchOpts>,
     ) -> Result<ChartResponse, Error> {
         get_chart_data(
             &self.client,
@@ -99,7 +95,6 @@ impl SolanaMirror {
             range,
             timeframe,
             detailed,
-            opts,
         )
         .await
     }
