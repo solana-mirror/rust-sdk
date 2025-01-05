@@ -8,8 +8,6 @@ use crate::{chart::types::GetCoinMarketChartParams, enums::Error};
 
 const BASE_URL: &str = "https://api.coingecko.com/api/v3";
 
-#[allow(dead_code)]
-// TODO: avoid dead code
 #[derive(Deserialize, Debug)]
 pub struct CoingeckoToken {
     #[serde(skip)]
@@ -73,7 +71,18 @@ impl CoingeckoClient {
     }
 
     async fn make_request(&self, endpoint: &str, query: &[(&str, String)]) -> Result<Value, Error> {
-        todo!()
+        let request = self.inner_client.get(endpoint).query(query);
+
+        match request.send().await {
+            Ok(response) => {
+                let res = response
+                    .json::<Value>()
+                    .await
+                    .map_err(|_| Error::ParseError)?;
+                Ok(res)
+            }
+            Err(_) => Err(Error::FetchError),
+        }
     }
 
     pub async fn get_coin_market_chart(

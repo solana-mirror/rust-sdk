@@ -9,7 +9,7 @@
 //! - Chart data
 
 mod balances;
-pub mod chart;
+mod chart;
 mod client;
 mod coingecko;
 mod consts;
@@ -18,6 +18,6 @@ mod price;
 mod solana_mirror;
 mod transactions;
 mod types;
-pub mod utils;
+mod utils;
 
 pub use solana_mirror::SolanaMirror;
