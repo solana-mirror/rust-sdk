@@ -1,5 +1,5 @@
-use std::future::Future;
 use std::pin::Pin;
+use std::{future::Future, sync::Arc};
 
 use crate::enums::Error;
 use base64::Engine;
@@ -197,14 +197,14 @@ fn deserialize<T: DeserializeOwned>(res: &Value) -> Result<T, Error> {
 }
 
 pub struct SolanaMirrorRpcClient {
-    inner_client: Client,
+    inner_client: Arc<Client>,
     pub rpc_url: String,
 }
 
 impl SolanaMirrorRpcClient {
-    pub fn new(rpc_url: String) -> Self {
+    pub fn new(client: Arc<Client>, rpc_url: String) -> Self {
         Self {
-            inner_client: Client::new(),
+            inner_client: client,
             rpc_url,
         }
     }

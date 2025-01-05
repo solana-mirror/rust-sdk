@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::balances::accounts::{get_parsed_accounts, ParsedAta};
 use crate::balances::dapps::raydium::{get_raydium_positions, ParsedPosition};
 use crate::chart::{get_chart_data, ChartResponse, Timeframe};
@@ -5,6 +7,7 @@ use crate::client::SolanaMirrorRpcClient;
 use crate::coingecko::CoingeckoClient;
 use crate::enums::Error;
 use crate::transactions::{get_parsed_transactions, TransactionResponse};
+use reqwest::Client;
 use solana_sdk::pubkey::Pubkey;
 
 /// Main struct for interacting with Solana Mirror SDK
@@ -23,10 +26,12 @@ impl SolanaMirror {
     /// # Arguments
     /// * `watch` - The Solana address to watch
     pub fn new(watch: Pubkey, rpc_url: String) -> Self {
+        let http_client = Arc::new(Client::new());
+
         Self {
             watch,
-            client: SolanaMirrorRpcClient::new(rpc_url.clone()),
-            coingecko_client: CoingeckoClient::new(),
+            client: SolanaMirrorRpcClient::new(http_client.clone(), rpc_url),
+            coingecko_client: CoingeckoClient::new(http_client),
         }
     }
 

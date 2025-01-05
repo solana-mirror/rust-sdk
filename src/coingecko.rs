@@ -1,4 +1,4 @@
-use std::{collections::HashMap, env, fs::File, io::BufReader};
+use std::{collections::HashMap, env, fs::File, io::BufReader, sync::Arc};
 
 use reqwest::Client;
 use serde::Deserialize;
@@ -54,38 +54,25 @@ pub async fn get_coingecko_id(mint: &str) -> Option<String> {
 }
 
 pub struct CoingeckoClient {
-    pub inner_client: Client,
+    pub inner_client: Arc<Client>,
     pub api_key: Option<String>,
 }
 
 impl CoingeckoClient {
-    #[allow(dead_code)]
-    // TODO: avoid dead code
-    pub fn new() -> Self {
+    pub fn new(client: Arc<Client>) -> Self {
         let api_key = match env::var("COINGECKO_API_KEY") {
             Ok(key) => Some(key),
             _ => None,
         };
 
         Self {
-            inner_client: Client::new(),
+            inner_client: client,
             api_key,
         }
     }
 
     async fn make_request(&self, endpoint: &str, query: &[(&str, String)]) -> Result<Value, Error> {
-        let request = self.inner_client.get(endpoint).query(query);
-
-        match request.send().await {
-            Ok(response) => {
-                let res = response
-                    .json::<Value>()
-                    .await
-                    .map_err(|_| Error::ParseError)?;
-                Ok(res)
-            }
-            Err(_) => Err(Error::FetchError),
-        }
+        todo!()
     }
 
     pub async fn get_coin_market_chart(
