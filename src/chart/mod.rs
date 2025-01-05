@@ -6,6 +6,7 @@ use std::{
 };
 pub use types::{
     ChartData, ChartDataWithPrice, ChartResponse, GetCoinMarketChartParams, MinimalChartData,
+    Timeframe,
 };
 
 use crate::{
@@ -18,30 +19,7 @@ use crate::{
     types::FormattedAmountWithPrice,
 };
 
-#[derive(Debug)]
-pub enum Timeframe {
-    Hour,
-    Day,
-}
-
 pub mod types;
-
-impl Timeframe {
-    pub fn new(timeframe: &str) -> Option<Self> {
-        match timeframe.to_lowercase().as_str() {
-            "h" => Some(Self::Hour),
-            "d" => Some(Self::Day),
-            _ => None,
-        }
-    }
-
-    pub fn to_seconds(timeframe: Self) -> i64 {
-        match timeframe {
-            Self::Hour => 3600,
-            Self::Day => 86400,
-        }
-    }
-}
 
 pub async fn get_chart_data(
     client: &SolanaMirrorRpcClient,
