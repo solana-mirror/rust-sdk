@@ -1,5 +1,5 @@
-use std::future::Future;
 use std::pin::Pin;
+use std::{future::Future, sync::Arc};
 
 use crate::enums::Error;
 use base64::Engine;
@@ -178,7 +178,7 @@ where
         }
     }
 
-    Err(Error::FetchError)
+    Err(Error::FetchError("Fetch error occurred".to_string()))
 }
 
 fn deserialize<T: DeserializeOwned>(res: &Value) -> Result<T, Error> {
@@ -186,32 +186,25 @@ fn deserialize<T: DeserializeOwned>(res: &Value) -> Result<T, Error> {
     if let Ok(deserialized_err) = from_value::<JsonRpcError>(res.clone()) {
         match deserialized_err.error.code {
             429 => return Err(Error::TooManyRequests),
-            _ => return Err(Error::FetchError),
+            _ => return Err(Error::FetchError("Fetch error occurred".to_string())),
         }
     }
 
     match from_value::<T>(res.clone()) {
         Ok(res) => Ok(res),
-        Err(_) => Err(Error::ParseError),
+        Err(e) => Err(Error::ParseError(e.to_string())),
     }
 }
 
-pub struct SolanaMirrorClient {
-    inner_client: Client,
+pub struct SolanaMirrorRpcClient {
+    inner_client: Arc<Client>,
     pub rpc_url: String,
 }
 
-impl SolanaMirrorClient {
-    pub fn new(rpc_url: String) -> Self {
+impl SolanaMirrorRpcClient {
+    pub fn new(client: Arc<Client>, rpc_url: String) -> Self {
         Self {
-            inner_client: Client::new(),
-            rpc_url,
-        }
-    }
-
-    pub fn from_client(inner_client: &Client, rpc_url: String) -> Self {
-        Self {
-            inner_client: inner_client.clone(),
+            inner_client: client,
             rpc_url,
         }
     }
@@ -222,7 +215,7 @@ impl SolanaMirrorClient {
     ) -> Result<Value, Error> {
         let serialized = match serde_json::to_string(body) {
             Ok(serialized) => serialized,
-            Err(_) => return Err(Error::ParseError),
+            Err(e) => return Err(Error::ParseError(e.to_string())),
         };
 
         let req = self
@@ -237,10 +230,10 @@ impl SolanaMirrorClient {
                 let res = response
                     .json::<Value>()
                     .await
-                    .map_err(|_| Error::ParseError)?;
+                    .map_err(|e| Error::ParseError(e.to_string()))?;
                 Ok(res)
             }
-            Err(_) => Err(Error::FetchError),
+            Err(e) => Err(Error::FetchError(e.to_string())),
         }
     }
 
@@ -258,7 +251,7 @@ impl SolanaMirrorClient {
 
         let serialized = match serde_json::to_string(body) {
             Ok(serialized) => serialized,
-            Err(_) => return Err(Error::ParseError),
+            Err(e) => return Err(Error::ParseError(e.to_string())),
         };
 
         let req = self
@@ -273,10 +266,10 @@ impl SolanaMirrorClient {
                 let res = response
                     .json::<Value>()
                     .await
-                    .map_err(|_| Error::ParseError)?;
+                    .map_err(|e| Error::ParseError(e.to_string()))?;
                 Ok(res)
             }
-            Err(_) => Err(Error::FetchError),
+            Err(e) => Err(Error::FetchError(e.to_string())),
         }
     }
 

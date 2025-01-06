@@ -1,11 +1,13 @@
-use std::{collections::HashMap, env, str::FromStr};
+use once_cell::sync::Lazy;
+use std::{collections::HashMap, str::FromStr};
+use tokio::sync::Mutex;
 
 use mpl_token_metadata::{accounts::Metadata, programs::MPL_TOKEN_METADATA_ID};
 use solana_sdk::pubkey::Pubkey;
 
 use crate::{
     balances::accounts::types::{ImageResponse, ParsedMetadata},
-    client::{GetAccountDataConfig, SolanaMirrorClient},
+    client::{GetAccountDataConfig, SolanaMirrorRpcClient},
     consts::{SOL_IMAGE, USDC_IMAGE},
     enums::Error,
     types::Page,
@@ -13,10 +15,6 @@ use crate::{
 
 pub fn clean_string(s: String) -> String {
     s.trim_matches('\0').trim_matches('"').to_string()
-}
-
-pub fn get_rpc() -> String {
-    env::var("RPC").unwrap_or_else(|_| "https://api.mainnet-beta.solana.com".to_string())
 }
 
 pub fn create_batches<T: Clone>(
@@ -49,40 +47,29 @@ pub fn create_batches<T: Clone>(
     batches
 }
 
-#[allow(dead_code)]
-// TODO: use this
-pub fn parse_page(index: Option<&str>) -> Result<Option<Page>, Error> {
+pub fn parse_page(index: Option<(u64, u64)>) -> Result<Option<Page>, Error> {
     if index.is_none() {
         return Ok(None);
     }
 
-    let split: Vec<&str> = index.unwrap().split('-').collect();
-
-    if split.len() != 2 {
-        return Err(Error::InvalidIndex);
-    }
-
-    let start_idx = match split[0].parse::<usize>() {
-        Ok(x) => x,
-        _ => return Err(Error::InvalidIndex),
-    };
-    let end_idx = match split[1].parse::<usize>() {
-        Ok(y) => y,
-        _ => return Err(Error::InvalidIndex),
-    };
+    let (start_idx, end_idx) = index.unwrap();
 
     if end_idx < start_idx {
         return Err(Error::InvalidIndex);
     }
 
-    Ok(Some(Page { start_idx, end_idx }))
+    Ok(Some(Page {
+        start_idx: start_idx as usize,
+        end_idx: end_idx as usize,
+    }))
 }
 
-static mut METADATA_CACHE: Option<HashMap<String, ParsedMetadata>> = None;
+static METADATA_CACHE: Lazy<Mutex<HashMap<String, ParsedMetadata>>> =
+    Lazy::new(|| Mutex::new(HashMap::new()));
 
 /// Fetches or retrieves from cache the metadata associated with the given SPL token mint address.
-pub async fn fetch_metadata(client: &SolanaMirrorClient, mint_address: &str) -> ParsedMetadata {
-    let cache = unsafe { METADATA_CACHE.get_or_insert(HashMap::new()) };
+pub async fn fetch_metadata(client: &SolanaMirrorRpcClient, mint_address: &str) -> ParsedMetadata {
+    let mut cache = METADATA_CACHE.lock().await;
     if let Some(metadata) = cache.get(mint_address) {
         return metadata.clone();
     }
@@ -132,10 +119,10 @@ fn parse_metadata(metadata: Metadata) -> ParsedMetadata {
     }
 }
 
-static mut IMAGE_CACHE: Option<HashMap<String, String>> = None;
+static IMAGE_CACHE: Lazy<Mutex<HashMap<String, String>>> = Lazy::new(|| Mutex::new(HashMap::new()));
 
 pub async fn fetch_image(metadata: &ParsedMetadata) -> String {
-    let cache = unsafe { IMAGE_CACHE.get_or_insert(HashMap::new()) };
+    let mut cache = IMAGE_CACHE.lock().await;
     if let Some(image_url) = cache.get(metadata.symbol.as_str()) {
         return image_url.to_string();
     }

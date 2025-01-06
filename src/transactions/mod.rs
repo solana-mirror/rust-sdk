@@ -1,43 +1,36 @@
 use solana_program::native_token::LAMPORTS_PER_SOL;
 use solana_sdk::pubkey::Pubkey;
-use std::{collections::HashMap, str::FromStr};
+use std::collections::HashMap;
 
 pub mod types;
 
 use crate::{
     client::{
         types::{TokenBalance, Transaction},
-        GetSignaturesForAddressConfig, GetTransactionConfig, SolanaMirrorClient,
+        GetSignaturesForAddressConfig, GetTransactionConfig, SolanaMirrorRpcClient,
     },
     consts::SOL_ADDRESS,
     enums::Error,
-    get_rpc,
     transactions::types::{BalanceChange, ParsedTransaction},
     types::FormattedAmount,
     utils::{create_batches, parse_page},
 };
 
-use self::types::TransactionResponse;
+pub use self::types::TransactionResponse;
 
 /// Get the parsed transactions for the given address
 pub async fn get_parsed_transactions(
-    address: &str,
-    index: Option<&str>,
+    client: &SolanaMirrorRpcClient,
+    address: &Pubkey,
+    index: Option<(u64, u64)>,
 ) -> Result<TransactionResponse, Error> {
-    let client = SolanaMirrorClient::new(get_rpc());
-
-    let pubkey = match Pubkey::from_str(address) {
-        Ok(pubkey) => pubkey,
-        Err(_) => return Err(Error::InvalidAddress),
-    };
-
     let page = match parse_page(index) {
         Ok(p) => p,
-        Err(_) => return Err(Error::ParseError),
+        Err(e) => return Err(Error::ParseError(e.to_string())),
     };
 
-    let signatures = get_signatures(&client, &pubkey).await?;
-    
+    let signatures = get_signatures(&client, &address).await?;
+
     let batches = match page {
         Some(p) => {
             if p.start_idx >= signatures.len() {
@@ -73,7 +66,7 @@ pub async fn get_parsed_transactions(
 
     let mut parsed_transactions: Vec<ParsedTransaction> = txs
         .iter()
-        .map(|tx| parse_transaction(tx, &pubkey))
+        .map(|tx| parse_transaction(tx, &address))
         .filter_map(|x| x.ok())
         .collect::<Vec<ParsedTransaction>>();
 
@@ -86,7 +79,7 @@ pub async fn get_parsed_transactions(
 }
 
 async fn get_signatures(
-    client: &SolanaMirrorClient,
+    client: &SolanaMirrorRpcClient,
     pubkey: &Pubkey,
 ) -> Result<Vec<String>, Error> {
     let mut before: Option<String> = None;

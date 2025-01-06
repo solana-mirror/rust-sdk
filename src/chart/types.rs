@@ -25,9 +25,7 @@ pub struct MinimalChartData {
     pub usd_value: f64,
 }
 
-#[allow(dead_code)]
-// TODO: use this
-#[derive(serde::Serialize)]
+#[derive(Serialize, Debug)]
 #[serde(untagged)]
 pub enum ChartResponse {
     Detailed(Vec<ChartDataWithPrice>),
@@ -39,4 +37,27 @@ pub struct GetCoinMarketChartParams {
     pub vs_currency: String,
     pub from: i64,
     pub to: i64,
+}
+
+#[derive(Debug)]
+pub enum Timeframe {
+    Hour,
+    Day,
+}
+
+impl Timeframe {
+    pub fn new(timeframe: &str) -> Option<Self> {
+        match timeframe.to_lowercase().as_str() {
+            "h" => Some(Self::Hour),
+            "d" => Some(Self::Day),
+            _ => None,
+        }
+    }
+
+    pub fn to_seconds(timeframe: Self) -> i64 {
+        match timeframe {
+            Self::Hour => 3600,
+            Self::Day => 86400,
+        }
+    }
 }

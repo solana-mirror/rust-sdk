@@ -1,88 +1,38 @@
-use reqwest::Client;
 use solana_sdk::pubkey::Pubkey;
 use std::{
     collections::{HashMap, HashSet},
     str::FromStr,
     time::{SystemTime, UNIX_EPOCH},
 };
-use types::{
+pub use types::{
     ChartData, ChartDataWithPrice, ChartResponse, GetCoinMarketChartParams, MinimalChartData,
+    Timeframe,
 };
 
 use crate::{
-    client::SolanaMirrorClient,
+    client::SolanaMirrorRpcClient,
     coingecko::{get_coingecko_id, CoingeckoClient},
     consts::SOL_ADDRESS,
     enums::Error,
-    get_rpc,
     price::get_price,
     transactions::{get_parsed_transactions, types::ParsedTransaction},
     types::FormattedAmountWithPrice,
 };
 
-#[derive(Debug)]
-pub enum Timeframe {
-    Hour,
-    Day,
-}
-
 pub mod types;
 
-impl Timeframe {
-    pub fn new(timeframe: &str) -> Option<Self> {
-        match timeframe.to_lowercase().as_str() {
-            "h" => Some(Self::Hour),
-            "d" => Some(Self::Day),
-            _ => None,
-        }
-    }
-
-    #[allow(dead_code)]
-    // TODO: can remove this
-    pub fn to_string(timeframe: Self) -> String {
-        match timeframe {
-            Self::Hour => String::from("h"),
-            Self::Day => String::from("d"),
-        }
-    }
-
-    pub fn to_seconds(timeframe: Self) -> i64 {
-        match timeframe {
-            Self::Hour => 3600,
-            Self::Day => 86400,
-        }
-    }
-}
-
 pub async fn get_chart_data(
-    address: &str,
-    timeframe: &str,
+    client: &SolanaMirrorRpcClient,
+    coingecko_client: &CoingeckoClient,
+    address: &Pubkey,
+    range: u8,
+    timeframe: Timeframe,
     detailed: Option<bool>,
 ) -> Result<ChartResponse, Error> {
-    let timeframe_str = &timeframe[timeframe.len() - 1..];
-    let parsed_timeframe = match Timeframe::new(timeframe_str) {
-        Some(parsed_timeframe) => parsed_timeframe,
-        None => return Err(Error::InvalidTimeframe),
-    };
-    // Gets the rest of the timeframe string (the amount of hours/days)
-    let range = match timeframe[..timeframe.len() - 1].parse::<u8>() {
-        Ok(range) => {
-            if timeframe_str.to_lowercase() == "h" && range > 24 * 90 {
-                return Err(Error::InvalidTimeframe);
-            }
-            range
-        }
-        Err(_) => return Err(Error::InvalidTimeframe),
-    };
-
-    let reqwest = Client::new();
-    let coingecko = CoingeckoClient::from_client(&reqwest);
-    let client = SolanaMirrorClient::from_client(&reqwest, get_rpc());
-
-    let txs = get_parsed_transactions(address, None).await?;
+    let txs = get_parsed_transactions(&client, address, None).await?;
     let states = get_balance_states(&txs.transactions);
-    let filtered_states = filter_balance_states(&states, parsed_timeframe, range);
-    let chart_data = get_price_states(&client, &coingecko, &filtered_states).await?;
+    let filtered_states = filter_balance_states(&states, timeframe, range);
+    let chart_data = get_price_states(&client, &coingecko_client, &filtered_states).await?;
 
     if detailed.unwrap_or(false) {
         Ok(ChartResponse::Detailed(chart_data))
@@ -196,7 +146,7 @@ fn filter_balance_states(
 }
 
 async fn get_price_states(
-    client: &SolanaMirrorClient,
+    client: &SolanaMirrorRpcClient,
     coingecko_client: &CoingeckoClient,
     states: &Vec<ChartData>,
 ) -> Result<Vec<ChartDataWithPrice>, Error> {

@@ -1,4 +1,4 @@
-use std::{collections::HashMap, env, fs::File, io::BufReader};
+use std::{collections::HashMap, env, fs::File, io::BufReader, sync::Arc};
 
 use reqwest::Client;
 use serde::Deserialize;
@@ -8,24 +8,24 @@ use crate::{chart::types::GetCoinMarketChartParams, enums::Error};
 
 const BASE_URL: &str = "https://api.coingecko.com/api/v3";
 
-#[allow(dead_code)]
-// TODO: avoid dead code
 #[derive(Deserialize, Debug)]
 pub struct CoingeckoToken {
-    pub name: String,
+    #[serde(skip)]
+    pub _name: String,
     pub id: String,
-    pub symbol: String,
+    #[serde(skip)]
+    pub _symbol: String,
 }
 
 pub type CoingeckoData = HashMap<String, CoingeckoToken>;
 
 /// Reads the coingecko.json file with all the coingecko IDs available
 pub async fn get_coingecko_data() -> Result<CoingeckoData, Error> {
-    let file = match File::open("lib/src/coingecko.json") {
+    // FIXME: https://linear.app/solanamirror/issue/SM-18/remove-coingecko-ids-hardcoding
+    let file = match File::open("src/coingecko.json") {
         Ok(file) => file,
         Err(e) => {
-            eprintln!("Failed to open file: {}", e);
-            return Err(Error::ParseError);
+            return Err(Error::ParseError(e.to_string()));
         }
     };
 
@@ -33,10 +33,7 @@ pub async fn get_coingecko_data() -> Result<CoingeckoData, Error> {
 
     match from_reader(reader) {
         Ok(data) => Ok(data),
-        Err(e) => {
-            eprintln!("Failed to parse file: {}", e);
-            Err(Error::ParseError)
-        }
+        Err(e) => Err(Error::ParseError(e.to_string())),
     }
 }
 
@@ -52,33 +49,19 @@ pub async fn get_coingecko_id(mint: &str) -> Option<String> {
 }
 
 pub struct CoingeckoClient {
-    pub inner_client: Client,
+    pub inner_client: Arc<Client>,
     pub api_key: Option<String>,
 }
 
 impl CoingeckoClient {
-    #[allow(dead_code)]
-    // TODO: avoid dead code
-    pub fn new() -> Self {
+    pub fn new(client: Arc<Client>) -> Self {
         let api_key = match env::var("COINGECKO_API_KEY") {
             Ok(key) => Some(key),
             _ => None,
         };
 
         Self {
-            inner_client: Client::new(),
-            api_key,
-        }
-    }
-
-    pub fn from_client(inner_client: &Client) -> Self {
-        let api_key = match env::var("COINGECKO_API_KEY") {
-            Ok(key) => Some(key),
-            _ => None,
-        };
-
-        Self {
-            inner_client: inner_client.clone(),
+            inner_client: client,
             api_key,
         }
     }
@@ -91,10 +74,10 @@ impl CoingeckoClient {
                 let res = response
                     .json::<Value>()
                     .await
-                    .map_err(|_| Error::ParseError)?;
+                    .map_err(|e| Error::ParseError(e.to_string()))?;
                 Ok(res)
             }
-            Err(_) => Err(Error::FetchError),
+            Err(e) => Err(Error::FetchError(e.to_string())),
         }
     }
 

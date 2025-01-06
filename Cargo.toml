@@ -2,8 +2,12 @@
 name = "solana_mirror"
 version = "0.1.0"
 edition = "2021"
+description = "A Rust SDK for exploring a given Solana wallet"
+repository = "https://github.com/solana-mirror/rust-sdk"
+license = "MIT"
 
 [dependencies]
+tokio = { version = "1", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 mpl-token-metadata = "4.1.2"
@@ -17,3 +21,8 @@ reqwest = { version = "0.11", features = ["json"] }
 futures = "0.3"
 uuid = { version = "1.3.1", features = [ "v4"] }
 bincode = "1.3.3"
+once_cell = "1.20.2"
+
+[lib]
+name = "solana_mirror"
+path = "src/lib.rs"

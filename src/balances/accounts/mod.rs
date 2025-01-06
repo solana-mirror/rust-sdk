@@ -8,7 +8,7 @@ use spl_token::id as spl_token_id;
 use crate::{
     client::{
         types::AccountData, GetTokenAccountsByOwnerConfig, GetTokenAccountsByOwnerFilter,
-        SolanaMirrorClient,
+        SolanaMirrorRpcClient,
     },
     coingecko::get_coingecko_id,
     consts::{SOL_ADDRESS, SOL_IMAGE},
@@ -18,13 +18,13 @@ use crate::{
     utils::{fetch_image, fetch_metadata},
 };
 
-use types::ParsedAta;
+pub use types::ParsedAta;
 
 pub mod types;
 
 /// Fetches the token accounts associated with the given address and parses them.
 pub async fn get_parsed_accounts(
-    client: &SolanaMirrorClient,
+    client: &SolanaMirrorRpcClient,
     address: &Pubkey,
 ) -> Result<Vec<ParsedAta>, Error> {
     let accounts = get_accounts(client, address).await?;
@@ -47,7 +47,7 @@ pub async fn get_parsed_accounts(
 }
 
 /// Fetches the SOL account associated with the given address.
-async fn get_solana(client: &SolanaMirrorClient, pubkey: &Pubkey) -> ParsedAta {
+async fn get_solana(client: &SolanaMirrorRpcClient, pubkey: &Pubkey) -> ParsedAta {
     let price = get_price(client, Pubkey::from_str(SOL_ADDRESS).unwrap(), Some(9)).await;
 
     let amount = client.get_balance(pubkey, None).await.unwrap_or(0);
@@ -72,7 +72,7 @@ async fn get_solana(client: &SolanaMirrorClient, pubkey: &Pubkey) -> ParsedAta {
 
 /// Fetches the token accounts associated with the given address.
 async fn get_accounts(
-    client: &SolanaMirrorClient,
+    client: &SolanaMirrorRpcClient,
     pubkey: &Pubkey,
 ) -> Result<Vec<AccountData>, Error> {
     let accounts = client
@@ -95,7 +95,7 @@ async fn get_accounts(
 
 /// Parses the given account.
 async fn parse_account(
-    client: &SolanaMirrorClient,
+    client: &SolanaMirrorRpcClient,
     account: &AccountData,
 ) -> Result<ParsedAta, Error> {
     let data = &account.account.data;
