@@ -72,7 +72,6 @@ impl SolanaMirror {
     ///
     /// # Arguments
     /// * `index` - Optional tuple of [start, end] for pagination
-    /// * `opts` - Optional fetch configuration
     pub async fn get_transactions(
         &self,
         index: Option<(u64, u64)>,
@@ -86,7 +85,6 @@ impl SolanaMirror {
     /// * `range` - Number of time periods to include
     /// * `timeframe` - Either Daily or Hourly
     /// * `detailed` - Whether to include detailed state information
-    /// * `opts` - Optional fetch configuration
     pub async fn get_chart_data(
         &self,
         range: u8,
