@@ -22,6 +22,7 @@ pub type CoingeckoData = HashMap<String, CoingeckoToken>;
 /// Reads the coingecko.json file with all the coingecko IDs available
 pub async fn get_coingecko_data() -> Result<CoingeckoData, Error> {
     // FIXME: https://linear.app/solanamirror/issue/SM-18/remove-coingecko-ids-hardcoding
+    // TODO: We'll need to fetch the data from the coingecko API for the current balances. Historical data will only cover token balances and not usd values
     let file = match File::open("src/coingecko.json") {
         Ok(file) => file,
         Err(e) => {
