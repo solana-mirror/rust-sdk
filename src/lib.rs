@@ -11,7 +11,6 @@
 mod balances;
 mod chart;
 mod client;
-mod coingecko;
 mod consts;
 mod enums;
 mod price;
