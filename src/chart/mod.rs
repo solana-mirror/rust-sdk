@@ -1,52 +1,26 @@
 use solana_sdk::pubkey::Pubkey;
-use std::{
-    collections::{HashMap, HashSet},
-    str::FromStr,
-    time::{SystemTime, UNIX_EPOCH},
-};
-pub use types::{
-    ChartData, ChartDataWithPrice, ChartResponse, GetCoinMarketChartParams, MinimalChartData,
-    Timeframe,
-};
+use std::time::{SystemTime, UNIX_EPOCH};
+pub use types::{ChartData, Timeframe};
 
 use crate::{
     client::SolanaMirrorRpcClient,
-    coingecko::{get_coingecko_id, CoingeckoClient},
-    consts::SOL_ADDRESS,
     enums::Error,
-    price::get_price,
     transactions::{get_parsed_transactions, types::ParsedTransaction},
-    types::FormattedAmountWithPrice,
 };
 
 pub mod types;
 
 pub async fn get_chart_data(
     client: &SolanaMirrorRpcClient,
-    coingecko_client: &CoingeckoClient,
     address: &Pubkey,
     range: u8,
     timeframe: Timeframe,
-    detailed: Option<bool>,
-) -> Result<ChartResponse, Error> {
+) -> Result<Vec<ChartData>, Error> {
     let txs = get_parsed_transactions(&client, address, None).await?;
-    let states = get_balance_states(&txs.transactions);
-    let filtered_states = filter_balance_states(&states, timeframe, range);
-    let chart_data = get_price_states(&client, &coingecko_client, &filtered_states).await?;
+    let balance_states = get_balance_states(&txs.transactions);
+    let filtered_balance_states = filter_balance_states(&balance_states, timeframe, range);
 
-    if detailed.unwrap_or(false) {
-        Ok(ChartResponse::Detailed(chart_data))
-    } else {
-        let minimal_chart_data: Vec<MinimalChartData> = chart_data
-            .iter()
-            .map(|x| MinimalChartData {
-                timestamp: x.timestamp,
-                usd_value: x.usd_value,
-            })
-            .collect();
-
-        Ok(ChartResponse::Minimal(minimal_chart_data))
-    }
+    Ok(filtered_balance_states)
 }
 
 /// Creates a series of states with the balances of a wallet at each transaction
@@ -143,90 +117,4 @@ fn filter_balance_states(
     }
 
     filtered_states
-}
-
-async fn get_price_states(
-    client: &SolanaMirrorRpcClient,
-    coingecko_client: &CoingeckoClient,
-    states: &Vec<ChartData>,
-) -> Result<Vec<ChartDataWithPrice>, Error> {
-    let mut coingecko_prices: HashMap<String, Vec<(u64, f64)>> = HashMap::new();
-
-    let unique_mints: HashSet<String> = states
-        .iter()
-        .flat_map(|state| state.balances.keys())
-        .cloned()
-        .collect();
-
-    let from = states.first().map_or(0, |state| state.timestamp);
-    let to = states.last().map_or(0, |state| state.timestamp);
-    let diff_d = (to - from) / 86400;
-    // Handle edge case in which coingecko returns daily data (more than 90 days)
-    // The states can't come in hourly if they represent more than 90 days, the API returns 400
-    let time_step = if diff_d > 90 { 86400 } else { 3600 };
-
-    // Save the coingecko prices for each unique mint
-    // From == to means there's no need for Coingecko
-    if from != to {
-        for mint in &unique_mints {
-            if let Some(id) = get_coingecko_id(mint).await {
-                let params = GetCoinMarketChartParams {
-                    id,
-                    vs_currency: "usd".to_string(),
-                    from,
-                    to,
-                };
-
-                if let Ok(prices) = coingecko_client.get_coin_market_chart(params).await {
-                    coingecko_prices.insert(mint.clone(), prices);
-                }
-            }
-        }
-    }
-
-    let mut new_states: Vec<ChartDataWithPrice> = Vec::with_capacity(states.len());
-    let last_state_index = states.len() - 1;
-
-    for (i, state) in states.into_iter().enumerate() {
-        let timestamp = state.timestamp;
-        let mut bals_with_price = HashMap::new();
-
-        for (mint, balance) in &state.balances {
-            let price = if i == last_state_index {
-                // Get current price from Jup for accurracy
-                let decimals = if mint == SOL_ADDRESS { Some(9) } else { None };
-                get_price(client, Pubkey::from_str(mint).unwrap(), decimals)
-                    .await
-                    .unwrap_or(0.0)
-            } else {
-                // Get the right index from the Coingecko prices
-                let index = ((timestamp - from) / time_step) as usize;
-                coingecko_prices
-                    .get(mint)
-                    .and_then(|prices| prices.get(index))
-                    .map_or(0.0, |(_, p)| *p)
-            };
-
-            bals_with_price.insert(
-                mint.clone(),
-                FormattedAmountWithPrice {
-                    amount: balance.clone(),
-                    price,
-                },
-            );
-        }
-
-        let usd_value = bals_with_price
-            .values()
-            .map(|b| b.amount.formatted * b.price)
-            .sum();
-
-        new_states.push(ChartDataWithPrice {
-            timestamp,
-            balances: bals_with_price,
-            usd_value,
-        });
-    }
-
-    Ok(new_states)
 }

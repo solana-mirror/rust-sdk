@@ -10,7 +10,6 @@ use crate::{
         types::AccountData, GetTokenAccountsByOwnerConfig, GetTokenAccountsByOwnerFilter,
         SolanaMirrorRpcClient,
     },
-    coingecko::get_coingecko_id,
     consts::{SOL_ADDRESS, SOL_IMAGE},
     enums::Error,
     price::get_price,
@@ -57,7 +56,6 @@ async fn get_solana(client: &SolanaMirrorRpcClient, pubkey: &Pubkey) -> ParsedAt
     ParsedAta {
         mint: SOL_ADDRESS.to_string(),
         ata: pubkey.to_string(),
-        coingecko_id: Some("wrapped-solana".to_string()),
         decimals: 9,
         name: "Solana".to_string(),
         symbol: "SOL".to_string(),
@@ -112,13 +110,11 @@ async fn parse_account(
     let mint_pubkey = Pubkey::from_str(mint).unwrap();
     let price = get_price(client, mint_pubkey, Some(decimals)).await;
 
-    let coingecko_id = get_coingecko_id(mint).await;
     let image = fetch_image(&metadata).await;
 
     Ok(ParsedAta {
         mint: mint.to_string(),
         ata: ata.to_string(),
-        coingecko_id,
         decimals,
         name: metadata.name,
         symbol: metadata.symbol,
