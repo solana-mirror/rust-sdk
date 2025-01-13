@@ -2,9 +2,8 @@ use std::sync::Arc;
 
 use crate::balances::accounts::{get_parsed_accounts, ParsedAta};
 use crate::balances::dapps::raydium::{get_raydium_positions, ParsedPosition};
-use crate::chart::{get_chart_data, ChartResponse, Timeframe};
+use crate::chart::{get_chart_data, ChartData, Timeframe};
 use crate::client::SolanaMirrorRpcClient;
-use crate::coingecko::CoingeckoClient;
 use crate::enums::Error;
 use crate::transactions::{get_parsed_transactions, TransactionResponse};
 use reqwest::Client;
@@ -16,8 +15,6 @@ pub struct SolanaMirror {
     watch: Pubkey,
     /// Client instance for making RPC calls
     client: SolanaMirrorRpcClient,
-    /// Coingecko instance for getting historical token prices
-    coingecko_client: CoingeckoClient,
 }
 
 impl SolanaMirror {
@@ -25,13 +22,13 @@ impl SolanaMirror {
     ///
     /// # Arguments
     /// * `watch` - The Solana address to watch
+    /// * `rpc_url` - The RPC URL to use for fetching data
     pub fn new(watch: Pubkey, rpc_url: String) -> Self {
         let http_client = Arc::new(Client::new());
 
         Self {
             watch,
             client: SolanaMirrorRpcClient::new(http_client.clone(), rpc_url),
-            coingecko_client: CoingeckoClient::new(http_client),
         }
     }
 
@@ -79,26 +76,16 @@ impl SolanaMirror {
         get_parsed_transactions(&self.client, &self.watch, index).await
     }
 
-    /// Fetches transaction history and returns chart data
+    /// Fetches transaction history and returns reconstructed historical token balances data
     ///
     /// # Arguments
     /// * `range` - Number of time periods to include
     /// * `timeframe` - Either Daily or Hourly
-    /// * `detailed` - Whether to include detailed state information
     pub async fn get_chart_data(
         &self,
         range: u8,
         timeframe: Timeframe,
-        detailed: Option<bool>,
-    ) -> Result<ChartResponse, Error> {
-        get_chart_data(
-            &self.client,
-            &self.coingecko_client,
-            &self.watch,
-            range,
-            timeframe,
-            detailed,
-        )
-        .await
+    ) -> Result<Vec<ChartData>, Error> {
+        get_chart_data(&self.client, &self.watch, range, timeframe).await
     }
 }
