@@ -20,3 +20,4 @@ mod types;
 mod utils;
 
 pub use solana_mirror::SolanaMirror;
+pub use chart::types::Timeframe;
