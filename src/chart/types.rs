@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
-use crate::types::FormattedAmount;
+use crate::types::internal::FormattedAmount;
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct ChartData {

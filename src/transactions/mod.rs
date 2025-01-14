@@ -12,7 +12,7 @@ use crate::{
     consts::SOL_ADDRESS,
     enums::Error,
     transactions::types::{BalanceChange, ParsedTransaction},
-    types::FormattedAmount,
+    types::internal::FormattedAmount,
     utils::{create_batches, parse_page},
 };
 

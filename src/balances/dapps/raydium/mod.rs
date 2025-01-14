@@ -11,7 +11,7 @@ use crate::{
     client::{GetAccountDataConfig, SolanaMirrorRpcClient},
     enums::Error,
     price::get_price,
-    types::{FormattedAmount, FormattedAmountWithPrice},
+    types::internal::{FormattedAmount, FormattedAmountWithPrice},
     utils::{calculate_concentrated_liquidity_amounts, fetch_image, fetch_metadata},
 };
 

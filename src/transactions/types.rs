@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-use crate::types::FormattedAmount;
+use crate::types::internal::FormattedAmount;
 
 /// Stores the pre and post balances of a transaction
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
