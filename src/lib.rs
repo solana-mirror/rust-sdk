@@ -20,4 +20,7 @@ mod types;
 mod utils;
 
 pub use solana_mirror::SolanaMirror;
+
+pub use balances::{accounts::ParsedAta, dapps::types::ParsedPosition};
 pub use chart::types::Timeframe;
+pub use transactions::types::TransactionResponse;

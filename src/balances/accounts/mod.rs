@@ -13,7 +13,7 @@ use crate::{
     consts::{SOL_ADDRESS, SOL_IMAGE},
     enums::Error,
     price::get_price,
-    types::internal::FormattedAmount,
+    types::FormattedAmount,
     utils::{fetch_image, fetch_metadata},
 };
 

@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::types::internal::FormattedAmount;
+use crate::types::FormattedAmount;
 
 #[derive(Default, Debug, Serialize)]
 pub struct ParsedAta {

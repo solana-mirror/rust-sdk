@@ -1,5 +1,5 @@
 use dotenv::dotenv;
-use solana_mirror;
+use solana_mirror::{self, TransactionResponse};
 use solana_sdk::pubkey::Pubkey;
 use std::str::FromStr;
 use tokio::main;
@@ -16,7 +16,7 @@ async fn main() {
 
     let client = solana_mirror::SolanaMirror::new(watch, rpc);
 
-    let transactions = client.get_transactions(Some((0, 10))).await.unwrap();
+    let transactions: TransactionResponse = client.get_transactions(Some((0, 10))).await.unwrap();
 
     println!("{:?}", transactions);
 }

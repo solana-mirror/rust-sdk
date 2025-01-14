@@ -1,4 +1,4 @@
-use crate::types::internal::FormattedAmountWithPrice;
+use crate::types::FormattedAmountWithPrice;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize, Default)]

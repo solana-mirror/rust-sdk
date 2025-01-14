@@ -10,7 +10,7 @@ use crate::{
     client::{GetAccountDataConfig, SolanaMirrorRpcClient},
     consts::{SOL_IMAGE, USDC_IMAGE},
     enums::Error,
-    types::internal::Page,
+    types::Page,
 };
 
 pub fn clean_string(s: String) -> String {
