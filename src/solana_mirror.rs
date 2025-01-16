@@ -49,7 +49,6 @@ impl SolanaMirror {
     ///
     /// # Arguments
     /// * `show_apps` - Whether to include dapp positions
-    /// * `opts` - Optional fetch configuration
     pub async fn get_token_accounts(
         &self,
         show_apps: Option<bool>,
