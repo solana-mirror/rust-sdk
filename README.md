@@ -1,3 +1,3 @@
 # SolanaMirror Rust SDK
 
-⚠️ This library is being built. For the current implementation, please go [here](https://github.com/solana-mirror/api)
+Rust SDK that helps fetch token balances, transaction history, and historical chart data for a Solana wallet.
