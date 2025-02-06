@@ -1,5 +1,5 @@
 use dotenv::dotenv;
-use solana_mirror;
+use solana_mirror::{self, ParsedAta, ParsedPosition};
 use solana_sdk::pubkey::Pubkey;
 use std::str::FromStr;
 use tokio::main;
@@ -16,7 +16,7 @@ async fn main() {
 
     let client = solana_mirror::SolanaMirror::new(watch, rpc);
 
-    let token_accounts = client.get_token_accounts(Some(true)).await.unwrap();
+    let token_accounts: (Vec<ParsedAta>, Option<Vec<ParsedPosition>>) = client.get_token_accounts(Some(true)).await.unwrap();
 
     println!("{:?}", token_accounts);
 }

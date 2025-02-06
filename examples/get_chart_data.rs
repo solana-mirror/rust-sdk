@@ -1,5 +1,5 @@
 use dotenv::dotenv;
-use solana_mirror::{self, Timeframe};
+use solana_mirror::{self, ChartData, Timeframe};
 use solana_sdk::pubkey::Pubkey;
 use std::str::FromStr;
 use tokio::main;
@@ -16,7 +16,7 @@ async fn main() {
 
     let client = solana_mirror::SolanaMirror::new(watch, rpc);
 
-    let chart_data = client.get_chart_data(14, Timeframe::Day).await.unwrap();
+    let chart_data: Vec<ChartData> = client.get_chart_data(14, Timeframe::Day).await.unwrap();
 
     println!("{:?}", chart_data);
 }
