@@ -66,3 +66,12 @@ Params:
 Returns:
 
 - `Vec<ChartData>`: Reconstructed historical token balances.
+
+## Error Types
+
+- `InvalidAddress`: Invalid Solana address
+- `InvalidIndex`: Invalid data access 
+- `InvalidTimeframe`: Invalid timeframe for queries
+- `FetchError`: Network request failures
+- `ParseError`: Data parsing failures
+- `TooManyRequests`: Rate limit exceeded
